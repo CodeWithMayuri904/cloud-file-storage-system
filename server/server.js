@@ -11,6 +11,9 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use("/api/auth", authRoutes);
+
+import authRoutes from "./routes/authRoutes.js";
 
 app.get("/", (req, res) => {
   res.send("API is running...");
