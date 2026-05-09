@@ -1,5 +1,6 @@
 import File from "../models/File.js";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 import s3 from "../config/s3.js";
 import crypto from "crypto";
 
@@ -58,6 +59,42 @@ export const getFiles = async (req, res) => {
     });
 
     res.json(files);
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+
+// delete file
+export const deleteFile = async (req, res) => {
+  try {
+    const file = await File.findById(req.params.id);
+
+    if (!file) {
+      return res.status(404).json({
+        message: "File not found",
+      });
+    }
+
+    // Delete from S3
+    const params = {
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: file.fileKey,
+    };
+
+    const command = new DeleteObjectCommand(params);
+
+    await s3.send(command);
+
+    // Delete from MongoDB
+    await file.deleteOne();
+
+    res.json({
+      message: "File deleted successfully",
+    });
+
   } catch (error) {
     res.status(500).json({
       message: error.message,
