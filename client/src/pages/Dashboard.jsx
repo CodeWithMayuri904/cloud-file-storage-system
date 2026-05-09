@@ -1,12 +1,21 @@
 import { useEffect, useState } from "react";
 import { getFiles, uploadFile, deleteFile } from "../services/fileService";
 import { useNavigate } from "react-router-dom";
+import ConfirmModal from "../components/ConfirmModal";
 
 export default function Dashboard() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [files, setFiles] = useState([]);
   const navigate = useNavigate();
-  
+
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  const [selectedFileId, setSelectedFileId] = useState(null);
+
+  const [search, setSearch] = useState("");
+
   useEffect(() => {
 
     const userInfo = localStorage.getItem("userInfo");
@@ -81,6 +90,11 @@ const handleDelete = async (id) => {
   }
 };
 
+// search functionality
+const filteredFiles = files.filter((file) =>
+  file.fileName.toLowerCase().includes(search.toLowerCase())
+);
+
   return (
     <div className="min-h-screen bg-gray-100">
 
@@ -98,12 +112,9 @@ const handleDelete = async (id) => {
         </div>
 
         <button
-            onClick={() => {
-                localStorage.removeItem("userInfo");
-                window.location.href = "/";
-            }}
+            onClick={() => setShowLogoutModal(true)}
             className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl transition-all duration-300"
-            >
+        >
             Logout
         </button>
 
@@ -206,9 +217,11 @@ const handleDelete = async (id) => {
             </h2>
 
             <input
-              type="text"
-              placeholder="Search files..."
-              className="border border-gray-300 rounded-xl px-4 py-2 w-52"
+                type="text"
+                placeholder="Search files..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="border border-gray-300 rounded-xl px-4 py-2 w-52"
             />
 
           </div>
@@ -239,7 +252,7 @@ const handleDelete = async (id) => {
 
             <tbody>
 
-              {files.map((file) => (
+              {filteredFiles.map((file) => (
 
                 <tr
                   key={file._id}
@@ -274,9 +287,12 @@ const handleDelete = async (id) => {
                     </a>
 
                         <button
-                            onClick={() => handleDelete(file._id)}
-                            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl transition-all duration-300"
-                            >
+                            onClick={() => {
+                            setSelectedFileId(file._id);
+                            setShowDeleteModal(true);
+                        }}
+                        className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl transition-all duration-300"
+                        >
                             Delete
                         </button>
 
@@ -293,6 +309,34 @@ const handleDelete = async (id) => {
         </div>
 
       </div>
+
+      {showDeleteModal && (
+
+        <ConfirmModal
+            title="Delete File"
+            message="Are you sure you want to delete this file?"
+            onCancel={() => setShowDeleteModal(false)}
+            onConfirm={() => {
+            handleDelete(selectedFileId);
+            setShowDeleteModal(false);
+            }}
+        />
+
+       )}
+
+      {showLogoutModal && (
+
+        <ConfirmModal
+            title="Logout"
+            message="Are you sure you want to logout?"
+            onCancel={() => setShowLogoutModal(false)}
+            onConfirm={() => {
+            localStorage.removeItem("userInfo");
+            window.location.href = "/";
+            }}
+        />
+
+    )}
 
     </div>
   );
